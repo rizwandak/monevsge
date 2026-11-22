@@ -25,6 +25,7 @@ export const loginByName = async (req, res, next) => {
       .from('profiles')
       .select('*')
       .ilike('full_name', full_name)
+      .limit(1)
       .maybeSingle();
 
     if (error) throw error;
