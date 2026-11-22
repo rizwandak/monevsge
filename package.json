@@ -1,0 +1,17 @@
+{
+  "name": "sistem-evaluasi-bem-filkom",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Sistem Evaluasi Tahunan Proker BEM FILKOM UB 2026 — Kabinet Bumi Cakrawala",
+  "scripts": {
+    "install:all": "npm install && npm --prefix frontend install && npm --prefix backend install",
+    "dev": "concurrently -n \"FRONTEND,BACKEND\" -c \"cyan,green\" \"npm run dev:frontend\" \"npm run dev:backend\"",
+    "dev:frontend": "npm --prefix frontend run dev",
+    "dev:backend": "npm --prefix backend run dev",
+    "build": "npm --prefix frontend run build",
+    "lint": "npm --prefix frontend run lint"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2"
+  }
+}
