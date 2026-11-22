@@ -412,25 +412,6 @@ export default function LoginPage() {
         </button>
         </div>
       </form>
-
-      <div className="mt-6 pt-4 border-t border-slate-100 flex items-center justify-between text-xs">
-        <div className="flex items-center gap-2">
-          {backendStatus.state === 'ok' ? (
-            <>
-              <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
-              <span className="text-emerald-700 font-medium">{backendStatus.message}</span>
-            </>
-          ) : backendStatus.state === 'error' ? (
-            <>
-              <AlertCircle className="w-4 h-4 text-amber-600 shrink-0" />
-              <span className="text-amber-700 font-medium">{backendStatus.message}</span>
-            </>
-          ) : (
-            <span className="text-slate-500">{backendStatus.message}</span>
-          )}
-        </div>
-        <span className="text-[11px] text-slate-400 font-medium">v1.0</span>
-      </div>
     </div>
   );
 }
