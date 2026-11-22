@@ -2,12 +2,26 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ShieldCheck, CheckCircle2, AlertCircle, ArrowRight } from 'lucide-react';
 import api from '../../services/api';
+import { authService } from '../../services/authService';
 import { useAuth, ROLE_DASHBOARD_MAP } from '../../contexts/AuthContext';
+
+const ROLE_OPTIONS = [
+  { value: 'DIRECTOR', label: 'Board of Director' },
+  { value: 'C_LEVEL', label: 'C-Level' },
+  { value: 'KAPEL', label: 'Ketua Pelaksana' },
+  { value: 'STAFF', label: 'Staff' },
+];
 
 export default function LoginPage() {
   const navigate = useNavigate();
   const { session, registered, assignments, activeRole, signInWithName } = useAuth();
+  const [selectedRole, setSelectedRole] = useState('C_LEVEL');
   const [fullName, setFullName] = useState('');
+  const [nim, setNim] = useState('');
+  const [directorateId, setDirectorateId] = useState('');
+  const [ministryId, setMinistryId] = useState('');
+  const [programId, setProgramId] = useState('');
+  const [options, setOptions] = useState({ members: [], directorates: [], ministries: [], programs: [] });
   const [backendStatus, setBackendStatus] = useState({ state: 'checking', message: 'Memeriksa koneksi server...' });
   const [authError, setAuthError] = useState('');
   const [submitting, setSubmitting] = useState(false);
@@ -34,24 +48,59 @@ export default function LoginPage() {
       .catch(() => {
         if (active) setBackendStatus({ state: 'error', message: 'Backend belum terhubung' });
       });
+
+    authService
+      .getLoginOptions()
+      .then((res) => {
+        if (active && res.data) setOptions(res.data);
+      })
+      .catch(() => {});
+
     return () => {
       active = false;
     };
   }, []);
 
+  const roleMembers = options.members.filter((m) => m.role === selectedRole);
+  const selectedMember = roleMembers.find((m) => m.full_name === fullName) || null;
+  const filteredMinistries = options.ministries.filter((m) => !directorateId || m.directorate_id === directorateId);
+  const filteredPrograms = options.programs.filter((p) => !ministryId || p.ministry_id === ministryId);
+
+  const handleRoleChange = (role) => {
+    setSelectedRole(role);
+    setFullName('');
+    setNim('');
+    setDirectorateId('');
+    setMinistryId('');
+    setProgramId('');
+    setAuthError('');
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (selectedRole === 'KAPEL' && (!directorateId || !ministryId || !programId)) {
+      setAuthError('Pilih Directorate, Ministry/Bureau, dan Program Kerja terlebih dahulu.');
+      return;
+    }
     if (!fullName.trim()) {
-      setAuthError('Masukkan nama lengkap Anda');
+      setAuthError('Pilih atau masukkan nama lengkap Anda.');
+      return;
+    }
+    if (!nim.trim()) {
+      setAuthError('Masukkan NIM Anda sebagai kredensial.');
       return;
     }
     setAuthError('');
     setSubmitting(true);
     try {
-      const targetPath = await signInWithName(fullName.trim());
+      const targetPath = await signInWithName(fullName.trim(), {
+        nim: nim.trim(),
+        role: selectedRole,
+        program_id: programId || undefined,
+      });
       navigate(targetPath, { replace: true });
     } catch (err) {
-      setAuthError(err.message || 'Gagal masuk. Pastikan nama sudah terdaftar.');
+      setAuthError(err.message || 'Gagal masuk. Pastikan nama dan NIM sudah sesuai.');
     } finally {
       setSubmitting(false);
     }
@@ -82,21 +131,155 @@ export default function LoginPage() {
 
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
-          <label htmlFor="fullName" className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-2">
-            Nama Lengkap
+          <label htmlFor="role" className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
+            Role
+          </label>
+          <select
+            id="role"
+            value={selectedRole}
+            onChange={(e) => handleRoleChange(e.target.value)}
+            className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-white/80 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-600 transition"
+          >
+            {ROLE_OPTIONS.map((r) => (
+              <option key={r.value} value={r.value}>
+                {r.label}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        {selectedRole !== 'KAPEL' ? (
+          <>
+            <div>
+              <label htmlFor="fullNameSelect" className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
+                Nama Lengkap
+              </label>
+              <select
+                id="fullNameSelect"
+                value={fullName}
+                onChange={(e) => setFullName(e.target.value)}
+                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-white/80 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-600 transition"
+              >
+                <option value="">-- Pilih Nama Anda --</option>
+                {roleMembers.map((m) => (
+                  <option key={m.assignment_id} value={m.full_name}>
+                    {m.full_name}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {selectedMember && (
+              <div className="p-3 rounded-xl bg-emerald-50/80 border border-emerald-200/80 text-xs space-y-1">
+                {selectedMember.directorate_name && (
+                  <div className="text-slate-600">
+                    <span className="font-semibold text-slate-800">Directorate:</span> {selectedMember.directorate_name}
+                  </div>
+                )}
+                {selectedMember.ministry_name && (
+                  <div className="text-slate-600">
+                    <span className="font-semibold text-slate-800">Ministry / Bureau:</span> {selectedMember.ministry_name}
+                  </div>
+                )}
+              </div>
+            )}
+          </>
+        ) : (
+          <>
+            <div>
+              <label htmlFor="directorate" className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
+                Directorate
+              </label>
+              <select
+                id="directorate"
+                value={directorateId}
+                onChange={(e) => {
+                  setDirectorateId(e.target.value);
+                  setMinistryId('');
+                  setProgramId('');
+                }}
+                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-white/80 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-600 transition"
+              >
+                <option value="">-- Pilih Directorate --</option>
+                {options.directorates.map((d) => (
+                  <option key={d.id} value={d.id}>
+                    {d.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label htmlFor="ministry" className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
+                Ministry / Bureau
+              </label>
+              <select
+                id="ministry"
+                value={ministryId}
+                disabled={!directorateId}
+                onChange={(e) => {
+                  setMinistryId(e.target.value);
+                  setProgramId('');
+                }}
+                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-white/80 text-sm text-slate-900 disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-600 transition"
+              >
+                <option value="">-- Pilih Ministry / Bureau --</option>
+                {filteredMinistries.map((m) => (
+                  <option key={m.id} value={m.id}>
+                    {m.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label htmlFor="program" className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
+                Program Kerja
+              </label>
+              <select
+                id="program"
+                value={programId}
+                disabled={!ministryId}
+                onChange={(e) => setProgramId(e.target.value)}
+                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-white/80 text-sm text-slate-900 disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-600 transition"
+              >
+                <option value="">-- Pilih Program Kerja --</option>
+                {filteredPrograms.map((p) => (
+                  <option key={p.id} value={p.id}>
+                    {p.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label htmlFor="kapelName" className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
+                Nama Ketua Pelaksana
+              </label>
+              <input
+                id="kapelName"
+                type="text"
+                value={fullName}
+                onChange={(e) => setFullName(e.target.value)}
+                placeholder="Masukkan nama lengkap Anda"
+                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-white/80 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-600 transition"
+              />
+            </div>
+          </>
+        )}
+
+        <div>
+          <label htmlFor="nim" className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
+            NIM
           </label>
           <input
-            id="fullName"
+            id="nim"
             type="text"
-            value={fullName}
-            onChange={(e) => setFullName(e.target.value)}
-            placeholder="Contoh: Muhammad Abdillah"
-            className="w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50/50 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:bg-white focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-600 transition"
-            autoFocus
+            value={nim}
+            onChange={(e) => setNim(e.target.value)}
+            placeholder="Masukkan NIM Anda"
+            className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-white/80 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-600 transition"
           />
-          <p className="text-xs text-slate-500 mt-2">
-            Gunakan nama lengkap sesuai data kepengurusan yang terdaftar.
-          </p>
         </div>
 
         {authError && (

@@ -4,6 +4,7 @@ import { validate } from '../middlewares/validate.js';
 import {
   loginByName,
   loginByNameSchema,
+  getLoginOptions,
   getMe,
   getAssignments,
   selectRole,
@@ -13,6 +14,7 @@ import {
 
 const router = Router();
 
+router.get('/login-options', getLoginOptions);
 router.post('/login-name', validate(loginByNameSchema), loginByName);
 router.get('/me', authenticate, getMe);
 router.get('/assignments', authenticate, getAssignments);

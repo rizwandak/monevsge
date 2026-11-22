@@ -57,8 +57,8 @@ export const AuthProvider = ({ children }) => {
     }
   }, [fetchBackendMe]);
 
-  const signInWithName = async (fullName) => {
-    const res = await authService.loginByName(fullName);
+  const signInWithName = async (fullName, extra = {}) => {
+    const res = await authService.loginByName(fullName, extra);
     const data = res.data;
     localStorage.setItem('profile_id', data.profile.id);
     setSession({ profile_id: data.profile.id });
