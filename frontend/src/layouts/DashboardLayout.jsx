@@ -153,7 +153,9 @@ export default function DashboardLayout({ title = 'Dashboard', navItems = [] }) 
           </div>
         </header>
         <main className="flex-1 w-full">
-          <Outlet />
+          <div key={location.pathname} className="animate-page-in">
+            <Outlet />
+          </div>
         </main>
       </div>
     </div>

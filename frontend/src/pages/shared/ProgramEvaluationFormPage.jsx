@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { Save, Send, ChevronLeft, ChevronRight, CheckCircle2 } from 'lucide-react';
 import { evaluationService } from '../../services/evaluationService';
 import { useAuth } from '../../contexts/AuthContext';
+import GlassLoader from '../../components/GlassLoader';
 
 const SECTIONS = [
   { key: 'IDENTITY', title: '1. Identitas Proker' },
@@ -106,7 +107,7 @@ export default function ProgramEvaluationFormPage() {
   };
 
   if (loading) {
-    return <div className="p-8 text-center text-sm text-slate-500">Memuat formulir...</div>;
+    return <GlassLoader label="Memuat formulir evaluasi proker..." />;
   }
 
   const progress = Math.round(((step + 1) / SECTIONS.length) * 100);

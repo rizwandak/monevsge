@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Save, Send, CheckCircle2, Sparkles } from 'lucide-react';
 import { hrService } from '../../services/hrService';
 import { useAuth } from '../../contexts/AuthContext';
+import GlassLoader from '../../components/GlassLoader';
 
 export default function HrEvaluationFormPage() {
   const { activeRole, assignments } = useAuth();
@@ -97,7 +98,7 @@ export default function HrEvaluationFormPage() {
   };
 
   if (loading) {
-    return <div className="p-8 text-center text-sm text-slate-500">Memuat formulir evaluasi SDM...</div>;
+    return <GlassLoader label="Memuat formulir evaluasi..." />;
   }
 
   return (
