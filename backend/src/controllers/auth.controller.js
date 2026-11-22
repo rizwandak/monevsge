@@ -81,6 +81,7 @@ export const getLoginOptions = async (req, res, next) => {
     ]);
 
     const profileMap = new Map((profRes.data || []).map((p) => [p.id, p]));
+    const seen = new Set();
     const members = (assignRes.data || [])
       .filter((m) => profileMap.has(m.profile_id))
       .map((m) => ({
@@ -92,6 +93,12 @@ export const getLoginOptions = async (req, res, next) => {
         ministry_id: m.ministry_id,
         ministry_name: m.ministries?.name || null,
       }))
+      .filter((m) => {
+        const key = `${m.role}:${m.ministry_id || ''}:${(m.full_name || '').toLowerCase()}`;
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      })
       .sort((a, b) => (a.full_name || '').localeCompare(b.full_name || ''));
 
     return successResponse(res, 'Opsi login berhasil diambil', {

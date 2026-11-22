@@ -47,7 +47,7 @@ function GlassSelect({ value, onChange, options, placeholder, disabled = false }
       </button>
 
       {open && (
-        <div className="!absolute left-0 right-0 mt-1.5 z-[100] liquid-glass rounded-2xl p-1.5 max-h-56 overflow-y-auto space-y-1 shadow-2xl">
+        <div className="!absolute left-0 right-0 mt-1.5 z-[100] bg-white/95 backdrop-blur-xl border border-white/80 rounded-2xl p-1.5 max-h-56 overflow-y-auto space-y-1 shadow-2xl">
           {options.length === 0 ? (
             <div className="px-3 py-2 text-xs text-slate-500 text-center">Tidak ada data</div>
           ) : (
@@ -206,7 +206,8 @@ export default function LoginPage() {
         </div>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-4">
+      <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-5 items-start">
+        <div className="space-y-4">
         <div>
           <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-2">
             Pilih Role
@@ -231,7 +232,9 @@ export default function LoginPage() {
             })}
           </div>
         </div>
+        </div>
 
+        <div className="space-y-4">
         {selectedRole === 'DIRECTOR' && (
           <>
             <div>
@@ -407,6 +410,7 @@ export default function LoginPage() {
           {submitting ? 'Memeriksa...' : 'Masuk ke Sistem'}
           <ArrowRight className="w-4 h-4" />
         </button>
+        </div>
       </form>
 
       <div className="mt-6 pt-4 border-t border-slate-100 flex items-center justify-between text-xs">
