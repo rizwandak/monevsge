@@ -103,9 +103,17 @@ export default function HrEvaluationFormPage() {
   return (
     <div className="max-w-3xl mx-auto space-y-6">
       <div className="bg-white border border-slate-200 rounded-xl p-6">
-        <span className="text-xs font-semibold text-blue-600 uppercase">Evaluasi Staff ({respondentType})</span>
-        <h2 className="text-lg font-bold text-slate-900 mt-1">{template?.title?.replace(/SDM/gi, 'Staff') || 'Evaluasi Staff'}</h2>
-        <p className="text-xs text-slate-500 mt-1">{template?.description}</p>
+        <span className="text-xs font-semibold text-blue-600 uppercase">
+          {respondentType === 'STAFF' ? 'Evaluasi C-Level' : 'Evaluasi Staff'}
+        </span>
+        <h2 className="text-lg font-bold text-slate-900 mt-1">
+          {respondentType === 'STAFF' ? 'Evaluasi C-Level 2026' : 'Evaluasi Staff 2026'}
+        </h2>
+        <p className="text-xs text-slate-500 mt-1">
+          {respondentType === 'STAFF'
+            ? 'Formulir evaluasi C-Level khusus responden Staff'
+            : 'Formulir evaluasi Staff khusus responden C-Level'}
+        </p>
       </div>
 
       {error && <div className="p-3 rounded-lg bg-red-50 border border-red-200 text-xs text-red-700">{error}</div>}
@@ -125,22 +133,51 @@ export default function HrEvaluationFormPage() {
                 {q.is_gacor_question && <Sparkles className="w-4 h-4 text-amber-500 shrink-0" />}
                 <span className="text-xs font-semibold text-blue-700">{q.aspect_name}</span>
               </div>
-              <p className="text-sm font-medium text-slate-900">{q.question_text}</p>
+              <p className="text-sm font-medium text-slate-900">
+                {respondentType === 'STAFF' && q.is_gacor_question
+                  ? 'Di antara para C-Level ini, siapa yang kamu rasa paling gacor dan sangat berperan dalam kementerianmu. Ceritakan dengan sejujur-jujurnya'
+                  : q.question_text}
+              </p>
 
               {q.question_type === 'MEMBER_PICK_WITH_REASON' ? (
                 <div className="space-y-3 pt-1">
-                  <select
-                    value={answers[q.id]?.selected_member_id || ''}
-                    onChange={(e) => updateAnswer(q.id, 'selected_member_id', e.target.value)}
-                    className="w-full px-3 py-2 rounded-lg border border-slate-300 text-sm bg-white"
-                  >
-                    <option value="">-- Pilih Nama --</option>
-                    {candidates.map((c) => (
-                      <option key={c.id} value={c.id}>
-                        {c.member_name} ({c.position_title})
-                      </option>
-                    ))}
-                  </select>
+                  {respondentType === 'STAFF' ? (
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                      {candidates.map((c) => {
+                        const isSelected = answers[q.id]?.selected_member_id === c.id;
+                        return (
+                          <button
+                            key={c.id}
+                            type="button"
+                            onClick={() => updateAnswer(q.id, 'selected_member_id', c.id)}
+                            className={`px-3.5 py-2.5 rounded-xl border text-left transition cursor-pointer ${
+                              isSelected
+                                ? 'bg-emerald-600 text-white border-emerald-500 shadow-sm'
+                                : 'bg-slate-50 hover:bg-emerald-50 text-slate-800 border-slate-200'
+                            }`}
+                          >
+                            <div className="text-xs font-semibold truncate">{c.member_name}</div>
+                            <div className={`text-[11px] truncate ${isSelected ? 'text-emerald-100' : 'text-slate-500'}`}>
+                              {c.position_title}
+                            </div>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  ) : (
+                    <select
+                      value={answers[q.id]?.selected_member_id || ''}
+                      onChange={(e) => updateAnswer(q.id, 'selected_member_id', e.target.value)}
+                      className="w-full px-3 py-2 rounded-lg border border-slate-300 text-sm bg-white"
+                    >
+                      <option value="">-- Pilih Nama --</option>
+                      {candidates.map((c) => (
+                        <option key={c.id} value={c.id}>
+                          {c.member_name} ({c.position_title})
+                        </option>
+                      ))}
+                    </select>
+                  )}
                   <textarea
                     rows={3}
                     value={answers[q.id]?.answer_text || ''}

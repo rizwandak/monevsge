@@ -77,7 +77,7 @@ export default function AppRoutes() {
                 title="Dashboard Staff"
                 navItems={[
                   { label: 'Dashboard', to: '/staff/dashboard' },
-                  { label: 'Evaluasi Staff', to: '/staff/evaluations/hr' },
+                  { label: 'Evaluasi C-Level', to: '/staff/evaluations/hr' },
                 ]}
               />
             }

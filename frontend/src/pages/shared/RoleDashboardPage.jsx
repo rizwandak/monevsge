@@ -6,10 +6,10 @@ import { getMinistryLogo } from '../../constants/ministryLogos';
 const QUICK_ACTIONS = {
   C_LEVEL: [
     { label: 'Evaluasi Proker (SC)', desc: 'Isi atau lanjutkan draft evaluasi proker ministry Anda', to: '/c-level/evaluations/programs' },
-    { label: 'Evaluasi SDM', desc: 'Isi formulir evaluasi SDM C-Level', to: '/c-level/evaluations/hr' },
+    { label: 'Evaluasi Staff', desc: 'Isi formulir evaluasi Staff', to: '/c-level/evaluations/hr' },
   ],
   STAFF: [
-    { label: 'Evaluasi SDM Staff', desc: 'Isi formulir evaluasi SDM Staff', to: '/staff/evaluations/hr' },
+    { label: 'Evaluasi C-Level', desc: 'Isi formulir evaluasi C-Level', to: '/staff/evaluations/hr' },
   ],
   KAPEL: [
     { label: 'Evaluasi Proker (OC)', desc: 'Isi evaluasi program kerja sebagai OC', to: '/oc/evaluations/programs' },
@@ -103,7 +103,7 @@ export default function RoleDashboardPage({ roleTitle }) {
           <div className="min-w-0">
             <div className="text-[11px] font-bold uppercase tracking-wider text-slate-600">Directorate</div>
             <div className="text-sm font-bold text-slate-900 truncate mt-0.5">
-              {activeAssignment?.directorates?.name || 'BEM FILKOM UB'}
+              {activeAssignment?.directorates?.name || activeAssignment?.ministries?.directorates?.name || 'BEM FILKOM UB'}
             </div>
           </div>
         </div>

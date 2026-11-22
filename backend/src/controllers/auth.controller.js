@@ -49,7 +49,7 @@ export const loginByName = async (req, res, next) => {
 
     const { data: assignments } = await supabaseAdmin
       .from('user_assignments')
-      .select('id, role, directorate_id, ministry_id, is_active, directorates(id, name, code), ministries(id, name, code)')
+      .select('id, role, directorate_id, ministry_id, is_active, directorates(id, name, code), ministries(id, name, code, directorates(id, name, code))')
       .eq('profile_id', profile.id)
       .eq('is_active', true);
 
