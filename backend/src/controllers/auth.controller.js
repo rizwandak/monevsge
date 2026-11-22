@@ -42,7 +42,7 @@ export const loginByName = async (req, res, next) => {
       return errorResponse(res, 'Akun Anda dinonaktifkan. Hubungi Admin.', [], 403);
     }
 
-    if (profile.nim && nim && profile.nim.trim() !== nim.trim()) {
+    if (!profile.nim || !nim || profile.nim.trim() !== nim.trim()) {
       return errorResponse(res, 'NIM tidak sesuai dengan data yang terdaftar.', [], 401);
     }
 
