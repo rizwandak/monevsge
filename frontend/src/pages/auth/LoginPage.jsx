@@ -47,7 +47,7 @@ function GlassSelect({ value, onChange, options, placeholder, disabled = false }
       </button>
 
       {open && (
-        <div className="absolute left-0 right-0 mt-1.5 z-50 liquid-glass rounded-2xl p-1.5 max-h-56 overflow-y-auto space-y-1 shadow-xl">
+        <div className="!absolute left-0 right-0 mt-1.5 z-[100] liquid-glass rounded-2xl p-1.5 max-h-56 overflow-y-auto space-y-1 shadow-2xl">
           {options.length === 0 ? (
             <div className="px-3 py-2 text-xs text-slate-500 text-center">Tidak ada data</div>
           ) : (
@@ -128,7 +128,13 @@ export default function LoginPage() {
     };
   }, []);
 
-  const roleMembers = options.members.filter((m) => m.role === selectedRole);
+  const roleMembers = options.members.filter((m) => {
+    if (m.role !== selectedRole) return false;
+    if ((selectedRole === 'C_LEVEL' || selectedRole === 'STAFF') && ministryId) {
+      return m.ministry_id === ministryId;
+    }
+    return true;
+  });
   const selectedMember = roleMembers.find((m) => m.full_name === fullName) || null;
   const filteredMinistries = options.ministries.filter((m) => !directorateId || m.directorate_id === directorateId);
   const filteredPrograms = options.programs.filter((p) => !ministryId || p.ministry_id === ministryId);
@@ -145,8 +151,12 @@ export default function LoginPage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (selectedRole === 'KAPEL' && (!directorateId || !ministryId || !programId)) {
-      setAuthError('Pilih Directorate, Ministry/Bureau, dan Program Kerja terlebih dahulu.');
+    if ((selectedRole === 'C_LEVEL' || selectedRole === 'STAFF') && (!directorateId || !ministryId)) {
+      setAuthError('Pilih Directorate dan Ministry/Bureau terlebih dahulu.');
+      return;
+    }
+    if (selectedRole === 'KAPEL' && (!ministryId || !programId)) {
+      setAuthError('Pilih Ministry/Bureau dan Program Kerja terlebih dahulu.');
       return;
     }
     if (!fullName.trim()) {
@@ -222,7 +232,7 @@ export default function LoginPage() {
           </div>
         </div>
 
-        {selectedRole !== 'KAPEL' ? (
+        {selectedRole === 'DIRECTOR' && (
           <>
             <div>
               <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
@@ -236,52 +246,107 @@ export default function LoginPage() {
               />
             </div>
 
-            {selectedMember && (
-              <div className="p-3 rounded-xl bg-emerald-50/80 border border-emerald-200/80 text-xs space-y-1">
-                {selectedMember.directorate_name && (
-                  <div className="text-slate-600">
-                    <span className="font-semibold text-slate-800">Directorate:</span> {selectedMember.directorate_name}
-                  </div>
-                )}
-                {selectedMember.ministry_name && (
-                  <div className="text-slate-600">
-                    <span className="font-semibold text-slate-800">Ministry / Bureau:</span> {selectedMember.ministry_name}
-                  </div>
-                )}
+            {selectedMember?.directorate_name && (
+              <div className="p-3 rounded-xl bg-emerald-50/80 border border-emerald-200/80 text-xs">
+                <div className="text-slate-600">
+                  <span className="font-semibold text-slate-800">Directorate:</span> {selectedMember.directorate_name}
+                </div>
               </div>
             )}
           </>
-        ) : (
+        )}
+
+        {(selectedRole === 'C_LEVEL' || selectedRole === 'STAFF') && (
           <>
             <div>
-              <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
-                Directorate
+              <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-2">
+                Pilih Directorate
               </label>
-              <GlassSelect
-                value={directorateId}
-                onChange={(val) => {
-                  setDirectorateId(val);
-                  setMinistryId('');
-                  setProgramId('');
-                }}
-                placeholder="-- Pilih Directorate --"
-                options={options.directorates.map((d) => ({ value: d.id, label: d.name }))}
-              />
+              <div className="grid grid-cols-2 gap-2">
+                {options.directorates.map((d) => {
+                  const active = directorateId === d.id;
+                  return (
+                    <button
+                      key={d.id}
+                      type="button"
+                      onClick={() => {
+                        setDirectorateId(d.id);
+                        setMinistryId('');
+                        setFullName('');
+                      }}
+                      className={`px-3 py-2 rounded-2xl text-xs font-semibold text-left transition cursor-pointer border ${
+                        active
+                          ? 'bg-emerald-600 text-white border-emerald-500 shadow-sm'
+                          : 'bg-white/55 hover:bg-white/80 text-slate-700 border-white/70'
+                      }`}
+                    >
+                      {d.name.replace(/^Directorate of /i, '')}
+                    </button>
+                  );
+                })}
+              </div>
             </div>
 
+            {directorateId && (
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-2">
+                  Pilih Ministry / Bureau
+                </label>
+                <div className="grid grid-cols-2 gap-2">
+                  {filteredMinistries.map((m) => {
+                    const active = ministryId === m.id;
+                    return (
+                      <button
+                        key={m.id}
+                        type="button"
+                        onClick={() => {
+                          setMinistryId(m.id);
+                          setFullName('');
+                        }}
+                        className={`px-3 py-2 rounded-2xl text-xs font-semibold text-left transition cursor-pointer border ${
+                          active
+                            ? 'bg-emerald-600 text-white border-emerald-500 shadow-sm'
+                            : 'bg-white/55 hover:bg-white/80 text-slate-700 border-white/70'
+                        }`}
+                      >
+                        {m.name}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {ministryId && (
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
+                  Nama Lengkap
+                </label>
+                <GlassSelect
+                  value={fullName}
+                  onChange={setFullName}
+                  placeholder="-- Pilih Nama Anda --"
+                  options={roleMembers.map((m) => ({ value: m.full_name, label: m.full_name }))}
+                />
+              </div>
+            )}
+          </>
+        )}
+
+        {selectedRole === 'KAPEL' && (
+          <>
             <div>
               <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
                 Ministry / Bureau
               </label>
               <GlassSelect
                 value={ministryId}
-                disabled={!directorateId}
                 onChange={(val) => {
                   setMinistryId(val);
                   setProgramId('');
                 }}
                 placeholder="-- Pilih Ministry / Bureau --"
-                options={filteredMinistries.map((m) => ({ value: m.id, label: m.name }))}
+                options={options.ministries.map((m) => ({ value: m.id, label: m.name }))}
               />
             </div>
 
