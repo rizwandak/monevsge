@@ -1,6 +1,6 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ShieldCheck, CheckCircle2, AlertCircle, ArrowRight } from 'lucide-react';
+import { ShieldCheck, CheckCircle2, AlertCircle, ArrowRight, ChevronDown, Check } from 'lucide-react';
 import api from '../../services/api';
 import { authService } from '../../services/authService';
 import { useAuth, ROLE_DASHBOARD_MAP } from '../../contexts/AuthContext';
@@ -11,6 +11,73 @@ const ROLE_OPTIONS = [
   { value: 'KAPEL', label: 'Ketua Pelaksana' },
   { value: 'STAFF', label: 'Staff' },
 ];
+
+function GlassSelect({ value, onChange, options, placeholder, disabled = false }) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef(null);
+
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (ref.current && !ref.current.contains(e.target)) setOpen(false);
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const selected = options.find((o) => o.value === value);
+
+  return (
+    <div ref={ref} className="relative">
+      <button
+        type="button"
+        disabled={disabled}
+        onClick={() => !disabled && setOpen((prev) => !prev)}
+        className={`w-full px-3.5 py-2.5 rounded-2xl border text-sm text-left flex items-center justify-between gap-2 transition cursor-pointer ${
+          disabled
+            ? 'opacity-50 cursor-not-allowed bg-white/40 border-white/50 text-slate-400'
+            : open
+            ? 'bg-white/85 border-emerald-500 ring-2 ring-emerald-500/20 text-slate-900'
+            : 'bg-white/55 hover:bg-white/80 border-white/70 text-slate-900'
+        }`}
+      >
+        <span className={`truncate ${selected ? 'font-medium text-slate-900' : 'text-slate-400'}`}>
+          {selected ? selected.label : placeholder}
+        </span>
+        <ChevronDown className={`w-4 h-4 text-slate-500 shrink-0 transition-transform ${open ? 'rotate-180' : ''}`} />
+      </button>
+
+      {open && (
+        <div className="absolute left-0 right-0 mt-1.5 z-50 liquid-glass rounded-2xl p-1.5 max-h-56 overflow-y-auto space-y-1 shadow-xl">
+          {options.length === 0 ? (
+            <div className="px-3 py-2 text-xs text-slate-500 text-center">Tidak ada data</div>
+          ) : (
+            options.map((opt) => {
+              const isSelected = opt.value === value;
+              return (
+                <button
+                  key={opt.value}
+                  type="button"
+                  onClick={() => {
+                    onChange(opt.value);
+                    setOpen(false);
+                  }}
+                  className={`w-full px-3 py-2 rounded-xl text-xs font-medium text-left flex items-center justify-between gap-2 transition cursor-pointer ${
+                    isSelected
+                      ? 'bg-emerald-600 text-white font-semibold shadow-sm'
+                      : 'text-slate-700 hover:bg-white/75 hover:text-slate-900'
+                  }`}
+                >
+                  <span className="truncate">{opt.label}</span>
+                  {isSelected && <Check className="w-3.5 h-3.5 shrink-0" />}
+                </button>
+              );
+            })
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
 
 export default function LoginPage() {
   const navigate = useNavigate();
@@ -158,22 +225,15 @@ export default function LoginPage() {
         {selectedRole !== 'KAPEL' ? (
           <>
             <div>
-              <label htmlFor="fullNameSelect" className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
+              <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
                 Nama Lengkap
               </label>
-              <select
-                id="fullNameSelect"
+              <GlassSelect
                 value={fullName}
-                onChange={(e) => setFullName(e.target.value)}
-                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-white/80 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-600 transition"
-              >
-                <option value="">-- Pilih Nama Anda --</option>
-                {roleMembers.map((m) => (
-                  <option key={m.assignment_id} value={m.full_name}>
-                    {m.full_name}
-                  </option>
-                ))}
-              </select>
+                onChange={setFullName}
+                placeholder="-- Pilih Nama Anda --"
+                options={roleMembers.map((m) => ({ value: m.full_name, label: m.full_name }))}
+              />
             </div>
 
             {selectedMember && (
@@ -194,69 +254,48 @@ export default function LoginPage() {
         ) : (
           <>
             <div>
-              <label htmlFor="directorate" className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
+              <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
                 Directorate
               </label>
-              <select
-                id="directorate"
+              <GlassSelect
                 value={directorateId}
-                onChange={(e) => {
-                  setDirectorateId(e.target.value);
+                onChange={(val) => {
+                  setDirectorateId(val);
                   setMinistryId('');
                   setProgramId('');
                 }}
-                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-white/80 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-600 transition"
-              >
-                <option value="">-- Pilih Directorate --</option>
-                {options.directorates.map((d) => (
-                  <option key={d.id} value={d.id}>
-                    {d.name}
-                  </option>
-                ))}
-              </select>
+                placeholder="-- Pilih Directorate --"
+                options={options.directorates.map((d) => ({ value: d.id, label: d.name }))}
+              />
             </div>
 
             <div>
-              <label htmlFor="ministry" className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
+              <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
                 Ministry / Bureau
               </label>
-              <select
-                id="ministry"
+              <GlassSelect
                 value={ministryId}
                 disabled={!directorateId}
-                onChange={(e) => {
-                  setMinistryId(e.target.value);
+                onChange={(val) => {
+                  setMinistryId(val);
                   setProgramId('');
                 }}
-                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-white/80 text-sm text-slate-900 disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-600 transition"
-              >
-                <option value="">-- Pilih Ministry / Bureau --</option>
-                {filteredMinistries.map((m) => (
-                  <option key={m.id} value={m.id}>
-                    {m.name}
-                  </option>
-                ))}
-              </select>
+                placeholder="-- Pilih Ministry / Bureau --"
+                options={filteredMinistries.map((m) => ({ value: m.id, label: m.name }))}
+              />
             </div>
 
             <div>
-              <label htmlFor="program" className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
+              <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
                 Program Kerja
               </label>
-              <select
-                id="program"
+              <GlassSelect
                 value={programId}
                 disabled={!ministryId}
-                onChange={(e) => setProgramId(e.target.value)}
-                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-white/80 text-sm text-slate-900 disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-600 transition"
-              >
-                <option value="">-- Pilih Program Kerja --</option>
-                {filteredPrograms.map((p) => (
-                  <option key={p.id} value={p.id}>
-                    {p.name}
-                  </option>
-                ))}
-              </select>
+                onChange={setProgramId}
+                placeholder="-- Pilih Program Kerja --"
+                options={filteredPrograms.map((p) => ({ value: p.id, label: p.name }))}
+              />
             </div>
 
             <div>
