@@ -131,21 +131,28 @@ export default function LoginPage() {
 
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
-          <label htmlFor="role" className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
-            Role
+          <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-2">
+            Pilih Role
           </label>
-          <select
-            id="role"
-            value={selectedRole}
-            onChange={(e) => handleRoleChange(e.target.value)}
-            className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-white/80 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-600 transition"
-          >
-            {ROLE_OPTIONS.map((r) => (
-              <option key={r.value} value={r.value}>
-                {r.label}
-              </option>
-            ))}
-          </select>
+          <div className="grid grid-cols-2 gap-2">
+            {ROLE_OPTIONS.map((r) => {
+              const active = selectedRole === r.value;
+              return (
+                <button
+                  key={r.value}
+                  type="button"
+                  onClick={() => handleRoleChange(r.value)}
+                  className={`px-3 py-2.5 rounded-2xl text-xs font-semibold text-left transition cursor-pointer border ${
+                    active
+                      ? 'bg-emerald-600 text-white border-emerald-500 shadow-sm'
+                      : 'bg-white/55 hover:bg-white/80 text-slate-700 border-white/70'
+                  }`}
+                >
+                  {r.label}
+                </button>
+              );
+            })}
+          </div>
         </div>
 
         {selectedRole !== 'KAPEL' ? (

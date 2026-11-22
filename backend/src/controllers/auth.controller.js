@@ -68,23 +68,25 @@ export const getLoginOptions = async (req, res, next) => {
       return errorResponse(res, 'Konfigurasi Supabase belum tersedia', [], 503);
     }
 
-    const [membersRes, dirRes, minRes, progRes] = await Promise.all([
+    const [assignRes, profRes, dirRes, minRes, progRes] = await Promise.all([
       supabaseAdmin
         .from('user_assignments')
-        .select('id, role, directorate_id, ministry_id, profiles!inner(id, full_name, is_active), directorates(id, name, code), ministries(id, name, code)')
+        .select('id, role, profile_id, directorate_id, ministry_id, directorates(id, name, code), ministries(id, name, code)')
         .in('role', ['DIRECTOR', 'C_LEVEL', 'STAFF'])
-        .eq('is_active', true)
-        .eq('profiles.is_active', true),
+        .eq('is_active', true),
+      supabaseAdmin.from('profiles').select('id, full_name, is_active').eq('is_active', true),
       supabaseAdmin.from('directorates').select('id, name, code').eq('is_active', true).order('name'),
       supabaseAdmin.from('ministries').select('id, name, code, directorate_id').eq('is_active', true).order('name'),
       supabaseAdmin.from('programs').select('id, name, ministry_id').eq('is_active', true).order('name'),
     ]);
 
-    const members = (membersRes.data || [])
+    const profileMap = new Map((profRes.data || []).map((p) => [p.id, p]));
+    const members = (assignRes.data || [])
+      .filter((m) => profileMap.has(m.profile_id))
       .map((m) => ({
         assignment_id: m.id,
         role: m.role,
-        full_name: m.profiles?.full_name,
+        full_name: profileMap.get(m.profile_id)?.full_name,
         directorate_id: m.directorate_id,
         directorate_name: m.directorates?.name || null,
         ministry_id: m.ministry_id,
